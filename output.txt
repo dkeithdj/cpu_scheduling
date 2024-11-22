@@ -1,0 +1,5 @@
+P1: TAT = 15, WT = 0
+P2: TAT = 44, WT = 14
+P3: TAT = 62, WT = 42
+Average TAT: 40.33
+Average WT: 18.67

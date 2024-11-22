@@ -1,38 +1,45 @@
 import matplotlib.pyplot as plt
 
-def draw_gantt_chart(schedule):
+def draw_gantt_chart(schedule, output_file):
     """
-    Draws a Gantt chart using matplotlib.
+    Draws a Gantt chart using matplotlib for the given schedule.
 
     Parameters:
         schedule (list of tuples): List of (process_id, start_time, end_time) for each process.
+        output_file (str): File name to save the chart as a PNG image.
     """
-    fig, gnt = plt.subplots(figsize=(10, 5))
-    gnt.set_ylim(0, 50)
-    gnt.set_xlim(0, max([end for _, _, end in schedule]) + 1)
+    fig, gnt = plt.subplots(figsize=(12, 6))
+    
+    # Extract unique processes for the chart
+    process_ids = list(set(pid for pid, _, _ in schedule))
+    process_positions = {pid: i for i, pid in enumerate(sorted(process_ids))}
 
+    gnt.set_xlim(0, max(end_time for _, _, end_time in schedule) + 1)
+    gnt.set_ylim(0, 10 * len(process_positions))
+    
     gnt.set_xlabel('Time')
     gnt.set_ylabel('Processes')
-    gnt.set_yticks([15])
-    gnt.set_yticklabels(['Processes'])
+    gnt.set_yticks([5 + i * 10 for i in range(len(process_positions))])
+    gnt.set_yticklabels([f"P{pid}" for pid in sorted(process_positions.keys())])
     gnt.grid(True)
 
     for process_id, start_time, end_time in schedule:
-        gnt.broken_barh([(start_time, end_time - start_time)], (10, 10),
-                        facecolors=('tab:blue'), label=f'P{process_id}')
+        gnt.broken_barh([(start_time, end_time - start_time)], 
+                        (process_positions[process_id] * 10, 8), 
+                        facecolors=('tab:blue'))
 
-    handles, labels = gnt.get_legend_handles_labels()
-    unique_labels = list(dict(zip(labels, handles)).values())
-    gnt.legend(unique_labels, [f'P{i[0]}' for i in schedule], loc='upper right')
-    plt.savefig('gantt_chart.png')
-    plt.show()
+    plt.title("Gantt Chart")
+    plt.tight_layout()
+    plt.savefig(output_file)
+    plt.close()
+    print(f"Gantt chart saved as {output_file}")
 
-def fcfs(processes):
+def fcfs(processes, output_file):
     processes.sort(key=lambda x: x[1])  # Sort by arrival time
     current_time = 0
-    gantt_chart = []
-    schedule = []
     total_tat, total_wt = 0, 0
+    schedule = []
+    results = []
 
     for process in processes:
         pid, arrival_time, burst_time, _ = process
@@ -45,17 +52,18 @@ def fcfs(processes):
         total_wt += waiting_time
 
         schedule.append((pid, start_time, completion_time))
-        gantt_chart.append((pid, start_time, completion_time))
+        results.append(f"P{pid}: TAT = {turnaround_time}, WT = {waiting_time}")
         current_time = completion_time
-
-        print(f"Process {pid}: TAT = {turnaround_time}, WT = {waiting_time}")
 
     avg_tat = total_tat / len(processes)
     avg_wt = total_wt / len(processes)
 
-    print(f"Average TAT: {avg_tat:.2f}, Average WT: {avg_wt:.2f}")
-    print("Gantt Chart:", gantt_chart)
-    draw_gantt_chart(schedule)
+    results.append(f"Average TAT: {avg_tat:.2f}")
+    results.append(f"Average WT: {avg_wt:.2f}")
+    with open(output_file, 'w') as f:
+        f.write("\n".join(results))
+        f.write("\n")
+    draw_gantt_chart(schedule, "fcfs_gannt.png")
 
 
 def sjf(processes):
@@ -212,38 +220,38 @@ def srtf(processes):
     print("Gantt Chart:", gantt_chart)
 
 def main():
-    print("CPU Scheduling Simulator")
-    print("1. First-Come-First-Serve (FCFS)")
-    print("2. Shortest Job First (SJF)")
-    print("3. Priority Scheduling (Non-Preemptive)")
-    print("4. Round Robin (RR)")
-    print("5. Shortest Remaining Time First (SRTF)")
+    input_file = input("Enter the input file name: ")
+    output_file = input("Enter the output file name: ")
 
-    choice = int(input("Select an algorithm: "))
+    try:
+        with open(input_file, 'r') as file:
+            lines = file.readlines()
 
-    n = int(input("Enter the number of processes: "))
-    processes = []
+        algorithm = int(lines[0].strip())
+        num_processes = int(lines[1].strip())
+        processes = []
+        time_quantum = None
 
-    for i in range(n):
-        pid = i + 1
-        arrival_time = int(input(f"Enter arrival time for process {pid}: "))
-        burst_time = int(input(f"Enter burst time for process {pid}: "))
-        priority = int(input(f"Enter priority for process {pid} (lower value = higher priority): ")) if choice == 3 else 0
-        processes.append([pid, arrival_time, burst_time, priority])
+        for i in range(num_processes):
+            parts = list(map(int, lines[i + 2].strip().split()))
+            if len(parts) == 3:
+                processes.append([i + 1, parts[0], parts[1], parts[2]])  # Priority Scheduling
+            else:
+                processes.append([i + 1, parts[0], parts[1], 0])  # FCFS, SJF, or RR
 
-    if choice == 1:
-        fcfs(processes)
-    elif choice == 2:
-        sjf(processes)
-    elif choice == 3:
-        priority_scheduling(processes)
-    elif choice == 4:
-        time_quantum = int(input("Enter time quantum: "))
-        rr(processes, time_quantum)
-    elif choice == 5:
-        srtf(processes)
-    else:
-        print("Invalid choice")
+        if algorithm == 4:  # Round Robin
+            time_quantum = int(lines[-1].strip())
+
+        if algorithm == 1:
+            fcfs(processes, output_file)
+        # Add similar calls for other algorithms like sjf_with_file, priority_with_file, rr_with_file, etc.
+        else:
+            print("Algorithm not implemented yet.")
+
+    except FileNotFoundError:
+        print(f"File {input_file} not found.")
+    except ValueError:
+        print("Invalid input format.")
 
 if __name__ == "__main__":
     main()
