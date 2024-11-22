@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-def draw_gantt_chart(schedule, output_file):
+def draw_gantt_chart(schedule,algorithm, output_file):
     """
     Draws a Gantt chart using matplotlib for the given schedule.
 
@@ -63,7 +63,7 @@ def fcfs(processes, output_file):
     with open(output_file, 'w') as f:
         f.write("\n".join(results))
         f.write("\n")
-    draw_gantt_chart(schedule, "fcfs_gannt.png")
+    draw_gantt_chart(schedule,"FCFS", "fcfs_gannt.png")
 
 
 def sjf(processes):
