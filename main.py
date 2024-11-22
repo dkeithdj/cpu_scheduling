@@ -28,7 +28,7 @@ def draw_gantt_chart(schedule,algorithm, output_file):
                         (process_positions[process_id] * 10, 8), 
                         facecolors=('tab:blue'))
 
-    plt.title("Gantt Chart")
+    plt.title(algorithm)
     plt.tight_layout()
     plt.savefig(output_file)
     plt.close()
